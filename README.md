@@ -1,5 +1,5 @@
 # TEDx RedSea STEM School Website
-
+ # Main homepage
 A modern and responsive website built for **TEDx RedSea STEM School**.  
 It highlights event details, speakers, tickets, and showcases the school's innovative approach to STEM education.
 
@@ -24,8 +24,8 @@ It highlights event details, speakers, tickets, and showcases the school's innov
 
 ##  Project Structure
 TEDx-RedSea-STEM-School/
-│── index.html # Main homepage
-│── /assets # Images, icons, and media files
-│── /css # Stylesheets
-│── /js # JavaScript files
-└── README.md # Project documentation****
+│── index.html
+│── /assets
+│── /css
+│── /js
+└── README.md
