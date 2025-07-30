@@ -80,13 +80,11 @@
     <img src="images/logo.png" alt="TEDx Logo" class="preloader-logo" />
   </div>
 
-  <!-- Add Loading Spinner -->
   <div id="loading-spinner" class="loading-spinner">
     <div class="spinner"></div>
     <div class="loading-text">Processing your request...</div>
   </div>
 
-  <!-- Add Notification Modal -->
   <div id="notification-modal" class="notification-modal">
     <div class="notification-content">
       <h3 id="notification-title"></h3>
@@ -320,18 +318,15 @@
     &copy; 2025 TEDxRedSeaSTEM | Powered by Red Sea STEM School Students
   </footer>
 
-<!-- Add hidden iframe for form submissions -->
 <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
 
 <script>
-    // Add iframe load handler
     window.addEventListener('load', function() {
       const iframe = document.getElementById('hidden_iframe');
       
       iframe.addEventListener('load', function() {
         try {
           hideLoading();
-          // Check if this was triggered by a form submission
           if (window.lastSubmittedForm === 'checkout') {
             showNotification(
               'Purchase Successful!',
@@ -374,8 +369,7 @@
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw0nXT433DKij04dw9mfX0UDnDNjcH5B4EAxV14TwhJpCzU0XCybc6J2oplGQleO272Sw/exec';
     const CONTACT_FORM_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw0nXT433DKij04dw9mfX0UDnDNjcH5B4EAxV14TwhJpCzU0XCybc6J2oplGQleO272Sw/exec';
 
-      // Team member promo codes (no discounts, just for tracking)
-  const PROMO_CODES = {
+      const PROMO_CODES = {
         'BN2025': 'Bissan Nasr',
         'AM2025': 'Amira Mohamed',
         'EA2025': 'Eyad Abdulhafiz',
@@ -466,7 +460,6 @@
         'SM2025D': 'Shahd mahmoud'
       };
 
-      // Function to validate promo code
       function validatePromoCode() {
         const promoCode = document.getElementById("promo_code").value.trim().toUpperCase();
         const discountInfo = document.getElementById("discount-info");
@@ -478,14 +471,13 @@
 
         if (PROMO_CODES[promoCode]) {
           discountInfo.textContent = "Valid promo code!";
-          discountInfo.style.color = "#4ade80"; // Success color
+          discountInfo.style.color = "#4ade80";
         } else {
           discountInfo.textContent = "Invalid promo code";
-          discountInfo.style.color = "#ef4444"; // Error color
+          discountInfo.style.color = "#ef4444";
         }
       }
 
-      // Initialize the form
     function openCheckout(type) {
     document.getElementById("checkout-modal").classList.remove("hidden");
       document.getElementById("ticket_type").value = type;
@@ -520,7 +512,6 @@
           preview.src = e.target.result;
           preview.style.display = 'block';
           
-          // Scroll to make the preview visible
           setTimeout(() => {
             preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           }, 100);
@@ -537,8 +528,7 @@
       const basePrice = parseFloat(document.querySelector("[name='ticket_price']").value);
       const discountInfo = document.getElementById("discount-info");
       
-      // Promo code validation is handled by the server
-      const discount = PROMO_CODES[promoCode] || 0; // Default to 0 if not found
+      const discount = PROMO_CODES[promoCode] || 0;
       const finalPrice = basePrice * (1 - discount);
       
       document.querySelector("[name='final_price']").value = finalPrice;
@@ -578,51 +568,70 @@
       const form = event.target;
       
       try {
-        // Get the image file
         const imageFile = document.getElementById('transaction_image').files[0];
         if (!imageFile) {
           throw new Error('Please upload a transaction screenshot');
         }
 
-        // Convert image to base64
         const base64Image = await new Promise((resolve) => {
           const reader = new FileReader();
           reader.onloadend = () => resolve(reader.result);
           reader.readAsDataURL(imageFile);
         });
 
-        // Create a new FormData instance
-        const formData = new FormData();
-        
-        // Add all form fields
-        formData.append('name', form.querySelector('[name="user_name"]').value);
-        formData.append('email', form.querySelector('[name="user_email"]').value);
-        formData.append('whatsapp', form.querySelector('[name="whatsapp"]').value);
-        formData.append('ticket_type', form.querySelector('[name="ticket_type"]').value);
-        formData.append('promo_code', form.querySelector('[name="promo_code"]').value || '');
-        formData.append('base_price', '525');
-        formData.append('transaction_image', base64Image);
+        const formData = {
+          name: form.querySelector('[name="user_name"]').value,
+          email: form.querySelector('[name="user_email"]').value,
+          whatsapp: form.querySelector('[name="whatsapp"]').value,
+          ticket_type: form.querySelector('[name="ticket_type"]').value,
+          promo_code: form.querySelector('[name="promo_code"]').value || '',
+          base_price: '525',
+          transaction_image: base64Image
+        };
 
-        // Create a temporary form for submission
-        const tempForm = document.createElement('form');
-        tempForm.method = 'POST';
-        tempForm.action = GOOGLE_SCRIPT_URL;
-        tempForm.target = 'hidden_iframe';
+        try {
+          const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams(formData)
+          });
+          
+          setTimeout(() => {
+            hideLoading();
+            showNotification(
+              'Purchase Successful!',
+              'Your ticket purchase has been submitted. Please check your email for confirmation.',
+              'success'
+            );
+            document.getElementById('checkout-form').reset();
+            document.getElementById('image_preview').style.display = 'none';
+            setTimeout(() => {
+              closeModal();
+            }, 3000);
+          }, 2000);
+          
+        } catch (fetchError) {
+          const tempForm = document.createElement('form');
+          tempForm.method = 'POST';
+          tempForm.action = GOOGLE_SCRIPT_URL;
+          tempForm.target = 'hidden_iframe';
 
-        // Add all form data as hidden inputs
-        for (let [key, value] of formData.entries()) {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = key;
-          input.value = value;
-          tempForm.appendChild(input);
+          Object.entries(formData).forEach(([key, value]) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = value;
+            tempForm.appendChild(input);
+          });
+
+          document.body.appendChild(tempForm);
+          window.lastSubmittedForm = 'checkout';
+          tempForm.submit();
+          document.body.removeChild(tempForm);
         }
-
-        // Add the form to the document, submit it, and remove it
-        document.body.appendChild(tempForm);
-        window.lastSubmittedForm = 'checkout';
-        tempForm.submit();
-        document.body.removeChild(tempForm);
         
       } catch (error) {
         hideLoading();
@@ -641,34 +650,52 @@
       const form = event.target;
       
       try {
-        // Create a temporary form for submission
-        const tempForm = document.createElement('form');
-        tempForm.method = 'POST';
-        tempForm.action = CONTACT_FORM_SCRIPT_URL;
-        tempForm.target = 'hidden_iframe';
-
-        // Add form data as hidden inputs
         const formData = {
-          'name': form.name.value,
-          'email': form.email.value,
-          'message': form.message.value,
-          'timestamp': new Date().toISOString()
+          name: form.name.value,
+          email: form.email.value,
+          message: form.message.value,
+          timestamp: new Date().toISOString()
         };
 
-        // Add all form data as hidden inputs
-        Object.entries(formData).forEach(([key, value]) => {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = key;
-          input.value = value;
-          tempForm.appendChild(input);
-        });
+        try {
+          const response = await fetch(CONTACT_FORM_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams(formData)
+          });
+          
+          setTimeout(() => {
+            hideLoading();
+            showNotification(
+              'Message Sent!',
+              'Your message has been sent successfully. We\'ll get back to you soon.',
+              'success'
+            );
+            document.getElementById('contact-form').reset();
+          }, 2000);
+          
+        } catch (fetchError) {
+          const tempForm = document.createElement('form');
+          tempForm.method = 'POST';
+          tempForm.action = CONTACT_FORM_SCRIPT_URL;
+          tempForm.target = 'hidden_iframe';
 
-        // Add the form to the document, submit it, and remove it
-        document.body.appendChild(tempForm);
-        window.lastSubmittedForm = 'contact';
-        tempForm.submit();
-        document.body.removeChild(tempForm);
+          Object.entries(formData).forEach(([key, value]) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = value;
+            tempForm.appendChild(input);
+          });
+
+          document.body.appendChild(tempForm);
+          window.lastSubmittedForm = 'contact';
+          tempForm.submit();
+          document.body.removeChild(tempForm);
+        }
         
       } catch (error) {
         hideLoading();
